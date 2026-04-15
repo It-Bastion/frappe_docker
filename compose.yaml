@@ -17,6 +17,29 @@ x-backend-defaults: &backend_defaults
     - sites:/home/frappe/frappe-bench/sites
 
 services:
+  db:
+    image: mariadb:10.6
+    platform: linux/amd64
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --skip-innodb-read-only-compressed
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+    volumes:
+      - db-data:/var/lib/mysql
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:7-alpine
+    platform: linux/amd64
+    restart: unless-stopped
+
+  redis-queue:
+    image: redis:7-alpine
+    platform: linux/amd64
+    restart: unless-stopped
   configurator:
     <<: *backend_defaults
     platform: linux/amd64
@@ -52,6 +75,8 @@ services:
     platform: linux/amd64
     command:
       - nginx-entrypoint.sh
+    ports:
+      - "8090:8080"
     environment:
       BACKEND: backend:8000
       SOCKETIO: websocket:9000
@@ -94,3 +119,4 @@ services:
 # ERPNext requires local assets access (Frappe does not)
 volumes:
   sites:
+  db-data:
